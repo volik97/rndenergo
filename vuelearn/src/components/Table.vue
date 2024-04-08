@@ -8,8 +8,8 @@ const props = defineProps({
     type: Array as PropType<Street[]>,
   }
 })
-const streets = props.data.map(item => item)
-console.log(streets === props.data)
+const streets = ref([...props.data]);
+const currentStreets = ref<Street[]>([])
 const filterText = ref('')
 const numberFilterType = ref('range');
 const exactNumberFilter = ref('');
@@ -22,22 +22,29 @@ const rangeFilter = ref({
   max: ''
 });
 const deleteRow = (index:number) => {
-  streets.splice(index, 1)
+  currentStreets.value.push(streets.value[index])
+  streets.value.splice(index, 1)
 }
 // const appendItem = (araay) => {
 //
 // }
 const filteredItems = computed(() => {
-  let filtered = streets;
+  let filtered = streets.value;
   // Filter by Street
   if (filters.value.street) {
     filtered = filtered.filter(item => item.street.toLowerCase().includes(filters.value.street.toLowerCase()));
   }
   // Filter by number
-  if (numberFilterType.value === 'range' && rangeFilter.value.min && rangeFilter.value.max) {
+  if (numberFilterType.value === 'range' && (rangeFilter.value.min || rangeFilter.value.max)) {
     filtered = filtered.filter(item => parseInt(item.number) >= parseInt(rangeFilter.value.min) && parseInt(item.number) <= parseInt(rangeFilter.value.max));
   } else if (numberFilterType.value === 'exact' && exactNumberFilter.value) {
-    filtered = filtered.filter(item => item.number === exactNumberFilter.value);
+    const exactNumFilter = exactNumberFilter.value.toLowerCase();
+    filtered = filtered.filter(item => {
+      const num = item.number.toLowerCase();
+      const exactRegex = new RegExp(`^${exactNumFilter.replace('-', '\\-')}(\\D|$)`);
+      return num.match(exactRegex);
+    });
+
   }
   // Filter by TP
   if (filters.value.tp) {
@@ -57,7 +64,7 @@ const filteredItems = computed(() => {
           <input id="street" type="text" class="input-field" v-model="filters.street" placeholder="Filter by Street...">
         </div>
         <div class="number-container flex flex-col gap-2">
-          <div class="flex gap-4 items-center">
+          <div class="flex items-center gapper">
             <div class="flex gapper">
               <input type="radio" id="range" value="range" v-model="numberFilterType">
               <label for="range" class="ml-2">Range</label>
@@ -67,7 +74,7 @@ const filteredItems = computed(() => {
               <label for="exact" class="ml-2">Exact</label>
             </div>
           </div>
-          <div v-if="numberFilterType === 'range'" class="flex gapper">
+          <div v-if="numberFilterType === 'range'" class="input-number flex">
             <input type="text" class="input-field" v-model="rangeFilter.min" placeholder="Min Number">
             <input type="text" class="input-field" v-model="rangeFilter.max" placeholder="Max Number">
           </div>
@@ -92,34 +99,35 @@ const filteredItems = computed(() => {
     </tr>
     </thead>
     <tbody class="">
-    <tr class="!mt-10" v-for="(item, index) in filteredItems" :key="index" @click="deleteRow(index)">
+    <tr class="!mt-10" v-for="(item, index) in filteredItems" :key="index" @dblclick="deleteRow(index)">
       <td>{{ item.street }}</td>
       <td>{{ item.number }}</td>
       <td>{{ item.tp }}</td>
     </tr>
     </tbody>
   </table>
-<!--  <table>-->
-<!--    <thead>-->
-<!--    <tr>-->
-<!--      <th>Street</th>-->
-<!--      <th>Number</th>-->
-<!--      <th>TP</th>-->
-<!--    </tr>-->
-<!--    </thead>-->
-<!--    <tbody class="">-->
-<!--    <tr class="!mt-10" v-for="(item, index) in filteredItems" :key="index">-->
-<!--      <td class="text-center">{{ item.street }}</td>-->
-<!--      <td>{{ item.number }}</td>-->
-<!--      <td>{{ item.tp }}</td>-->
-<!--    </tr>-->
-<!--    </tbody>-->
-<!--  </table>-->
+  <table>
+    <thead>
+    <tr>
+      <th>Street</th>
+      <th>Number</th>
+      <th>TP</th>
+    </tr>
+    </thead>
+    <tbody class="">
+    <tr class="" v-for="(item, index) in currentStreets" :key="index">
+      <td >{{ item.street }}</td>
+      <td>{{ item.number }}</td>
+      <td>{{ item.tp }}</td>
+    </tr>
+    </tbody>
+  </table>
   </div>
 </template>
 
 <style scoped>
 table {
+  height: fit-content;
   width: 100%;
   border-collapse: collapse;
 }
@@ -140,7 +148,7 @@ th {
   gap: 200px;
 }
 .gapper {
-  gap: 10px;
+  gap: 15px;
 }
 .number-container {
 }
@@ -156,6 +164,7 @@ input {
 }
 .input-number {
   display: flex;
+  gap: 10px;
   margin-top: 10px;
 }
 </style>
