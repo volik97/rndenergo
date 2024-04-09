@@ -1,16 +1,16 @@
 <script setup lang="ts">
+
 import type {PropType} from "vue";
 import type {Street} from "~/src/types/street";
 
 const props = defineProps({
   data: {
     required: true,
-    type: Array as PropType<Street[]>,
+    type: Array as PropType<{ id: number; street: string; number: string; tp: string; }[]>,
   }
 })
 const streets = ref([...props.data]);
-const currentStreets = ref<Street[]>([])
-const filterText = ref('')
+const currentStreets = ref<{ id: number; street: string; number: string; tp: string; }[]>([])
 const numberFilterType = ref('range');
 const exactNumberFilter = ref('');
 const filters = ref({
@@ -21,13 +21,15 @@ const rangeFilter = ref({
   min: '',
   max: ''
 });
-const deleteRow = (index:number) => {
+const deleteRow = (id:string) => {
+  console.log(typeof id)
+  const index = streets.value.findIndex(item => String(item.id) === String(id));
   currentStreets.value.push(streets.value[index])
-  streets.value.splice(index, 1)
+  if (index !== -1) {
+    streets.value.splice(index, 1);
+  }
 }
-// const appendItem = (araay) => {
-//
-// }
+
 const filteredItems = computed(() => {
   let filtered = streets.value;
   // Filter by Street
@@ -40,6 +42,15 @@ const filteredItems = computed(() => {
   } else if (numberFilterType.value === 'exact' && exactNumberFilter.value) {
     const exactNumFilter = exactNumberFilter.value.toLowerCase();
     filtered = filtered.filter(item => {
+      if((item.number.split('').length >= 3) && (item.number.split('').includes('-'))){
+        const min = Number(item.number.split('-')[0])
+        const max = Number(item.number.split('-')[1])
+        console.log(min, max, item.number.split('-'))
+        if((min <= Number(exactNumFilter)) && (Number(exactNumFilter) <= max)){
+          return item
+        }
+
+      }
       const num = item.number.toLowerCase();
       const exactRegex = new RegExp(`^${exactNumFilter.replace('-', '\\-')}(\\D|$)`);
       return num.match(exactRegex);
@@ -52,12 +63,10 @@ const filteredItems = computed(() => {
   }
   return filtered;
 });
-
-
 </script>
 
 <template>
-  <div class="flex">
+  <div class="container-filters flex">
       <div class="flex items-end justify-stretch gapper">
         <div class="flex flex-col gapper">
           <label for='street'>Улица</label>
@@ -87,6 +96,8 @@ const filteredItems = computed(() => {
           <input id='tp' type="text" v-model="filters.tp" placeholder="Filter by TP...">
         </div>
       </div>
+      <NuxtLink :to="{name: 'print'}" class="bg-white text-xl border rounded-3xl text-center border-cyan-800">Печать</NuxtLink>
+
   </div>
 
   <div class='table-container'>
@@ -99,14 +110,14 @@ const filteredItems = computed(() => {
     </tr>
     </thead>
     <tbody class="">
-    <tr class="!mt-10" v-for="(item, index) in filteredItems" :key="index" @dblclick="deleteRow(index)">
-      <td>{{ item.street }}</td>
-      <td>{{ item.number }}</td>
-      <td>{{ item.tp }}</td>
+    <tr class="!mt-10" v-for="({street, number, tp, id}, index) in filteredItems" :key="index" @dblclick="deleteRow(String(id))">
+      <td>{{ street }}</td>
+      <td>{{ number }}</td>
+      <td>{{ tp }}</td>
     </tr>
     </tbody>
   </table>
-  <table>
+  <table id="printable">
     <thead>
     <tr>
       <th>Street</th>
@@ -141,6 +152,10 @@ th, td {
 th {
   background-color: #f2f2f2;
 }
+.container-filters {
+  align-items: end;
+  justify-content: space-between;
+}
 .table-container {
   display: flex;
   width: 100%;
@@ -152,6 +167,16 @@ th {
 }
 .number-container {
 }
+button {
+  padding: 8px 30px;
+  height: fit-content;
+}
+button:hover{
+  background-color: rgb(21 94 117);
+  color: #fff;
+  transition: background-color;
+  transition-duration: 200ms;
+}
 .input-field {
   height: fit-content;
 }
@@ -162,6 +187,7 @@ input {
   border-radius: 20px;
   padding: 8px 16px;
 }
+
 .input-number {
   display: flex;
   gap: 10px;

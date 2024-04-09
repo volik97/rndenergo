@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import tableJson from '../newRostData.json'
-import TableDataStreet from "~/src/components/TableDataStreet.vue";
 import Table from "~/src/components/Table.vue";
 const props = defineProps({
   city: String,
