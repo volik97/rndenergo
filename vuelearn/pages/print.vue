@@ -2,6 +2,13 @@
 
 import Table from "~/src/components/Table.vue";
 
+  const getDataFromLocalStorage = () => {
+
+    return JSON.parse(localStorage.getItem('dataToPrint') as string)
+  }
+  const printData = getDataFromLocalStorage()._value
+  onMounted(() => {
+    window.print()})
 
 </script>
 
@@ -15,7 +22,7 @@ import Table from "~/src/components/Table.vue";
     </tr>
     </thead>
     <tbody class="">
-    <tr class="" v-for="(item, index) in props.data" :key="index">
+    <tr class="" v-for="(item, index) in printData" :key="index">
       <td >{{ item.street }}</td>
       <td>{{ item.number }}</td>
       <td>{{ item.tp }}</td>
@@ -27,7 +34,8 @@ import Table from "~/src/components/Table.vue";
 <style scoped>
 table {
   height: fit-content;
-  width: 100%;
+  margin: 40px auto;
+  width: 70%;
   border-collapse: collapse;
 }
 

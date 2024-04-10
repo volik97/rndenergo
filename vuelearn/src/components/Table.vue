@@ -21,11 +21,12 @@ const rangeFilter = ref({
   min: '',
   max: ''
 });
+
 const deleteRow = (id:string) => {
-  console.log(typeof id)
   const index = streets.value.findIndex(item => String(item.id) === String(id));
   currentStreets.value.push(streets.value[index])
   if (index !== -1) {
+    saveToLocalStorage()
     streets.value.splice(index, 1);
   }
 }
@@ -63,6 +64,19 @@ const filteredItems = computed(() => {
   }
   return filtered;
 });
+const saveToLocalStorage = () => {
+  localStorage.setItem('dataToPrint', JSON.stringify(currentStreets))
+}
+const clearRightTable = () => {
+  currentStreets.value = []
+  localStorage.clear()
+}
+onMounted(() => {
+  if(localStorage.getItem('dataToPrint')){
+    currentStreets.value = JSON.parse(localStorage.getItem('dataToPrint')as string)._value
+    streets.value = streets.value.filter(item => !currentStreets.value.some(currentItem => item.id === currentItem.id))
+  }
+})
 </script>
 
 <template>
@@ -93,11 +107,11 @@ const filteredItems = computed(() => {
         </div>
         <div class="flex flex-col gapper">
           <label for='tp'>ТП</label>
-          <input id='tp' type="text" v-model="filters.tp" placeholder="Filter by TP...">
+          <input id='tp' class="input-field" type="text" v-model="filters.tp" placeholder="Filter by TP...">
         </div>
       </div>
-      <NuxtLink :to="{name: 'print'}" class="bg-white text-xl border rounded-3xl text-center border-cyan-800">Печать</NuxtLink>
-
+      <NuxtLink to="/print" @click="saveToLocalStorage" class="bg-white text-xl border rounded-3xl text-center border-cyan-800">Печать</NuxtLink>
+      <button @click="clearRightTable" class="">Очистить правую таблицу</button>
   </div>
 
   <div class='table-container'>
@@ -178,6 +192,7 @@ button:hover{
   transition-duration: 200ms;
 }
 .input-field {
+  max-width: 180px;
   height: fit-content;
 }
 input {
