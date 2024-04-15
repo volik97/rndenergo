@@ -16,9 +16,9 @@ import Table from "~/src/components/Table.vue";
   <table id="printable">
     <thead>
     <tr>
-      <th>Street</th>
-      <th>Number</th>
-      <th>TP</th>
+      <th>Улица</th>
+      <th>Номер</th>
+      <th>ТП</th>
     </tr>
     </thead>
     <tbody class="">
@@ -41,7 +41,7 @@ table {
 
 th, td {
   border: 1px solid #ddd;
-  padding: 8px;
+  padding: 2px 8px;
   text-align: left;
 }
 

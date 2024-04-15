@@ -22,12 +22,21 @@ const rangeFilter = ref({
   max: ''
 });
 
-const deleteRow = (id:string) => {
-  const index = streets.value.findIndex(item => String(item.id) === String(id));
-  currentStreets.value.push(streets.value[index])
-  if (index !== -1) {
+const deleteRow = (id:string, table:string) => {
+  if(table === 'left'){
+    const index = streets.value.findIndex(item => String(item.id) === String(id));
+    currentStreets.value.push(streets.value[index])
+    if (index !== -1) {
     saveToLocalStorage()
-    streets.value.splice(index, 1);
+    streets.value.splice(index, 1);}
+  }
+  else{
+    const index = currentStreets.value.findIndex(item => String(item.id) === String(id));
+    streets.value.push(currentStreets.value[index])
+    if (index !== -1) {
+      currentStreets.value.splice(index, 1);}
+      saveToLocalStorage()
+      console.log(JSON.parse(localStorage.getItem('dataToPrint')as string)._value)
   }
 }
 
@@ -39,7 +48,15 @@ const filteredItems = computed(() => {
   }
   // Filter by number
   if (numberFilterType.value === 'range' && (rangeFilter.value.min || rangeFilter.value.max)) {
-    filtered = filtered.filter(item => parseInt(item.number) >= parseInt(rangeFilter.value.min) && parseInt(item.number) <= parseInt(rangeFilter.value.max));
+    if(rangeFilter.value.min && !rangeFilter.value.max){
+      filtered = filtered.filter(item => parseInt(item.number) >= parseInt(rangeFilter.value.min));
+    }
+    if(!rangeFilter.value.min && rangeFilter.value.max){
+      filtered = filtered.filter(item => parseInt(item.number) <= parseInt(rangeFilter.value.max));
+    }
+    else{
+      filtered = filtered.filter(item => parseInt(item.number) >= parseInt(rangeFilter.value.min) && parseInt(item.number) <= parseInt(rangeFilter.value.max));
+    }
   } else if (numberFilterType.value === 'exact' && exactNumberFilter.value) {
     const exactNumFilter = exactNumberFilter.value.toLowerCase();
     filtered = filtered.filter(item => {
@@ -69,6 +86,7 @@ const saveToLocalStorage = () => {
 }
 const clearRightTable = () => {
   currentStreets.value = []
+  streets.value = [...props.data]
   localStorage.clear()
 }
 onMounted(() => {
@@ -88,13 +106,13 @@ onMounted(() => {
         </div>
         <div class="number-container flex flex-col gap-2">
           <div class="flex items-center gapper">
-            <div class="flex gapper">
+            <div class="flex gapper-2">
               <input type="radio" id="range" value="range" v-model="numberFilterType">
-              <label for="range" class="ml-2">Range</label>
+              <label for="range" class="ml-2">Диапазон</label>
             </div>
-            <div class="flex gapper">
+            <div class="flex gapper-2">
               <input type="radio" id="exact" value="exact" v-model="numberFilterType">
-              <label for="exact" class="ml-2">Exact</label>
+              <label for="exact" class="ml-2">Точный</label>
             </div>
           </div>
           <div v-if="numberFilterType === 'range'" class="input-number flex">
@@ -110,21 +128,23 @@ onMounted(() => {
           <input id='tp' class="input-field" type="text" v-model="filters.tp" placeholder="Filter by TP...">
         </div>
       </div>
-      <NuxtLink to="/print" @click="saveToLocalStorage" class="bg-white text-xl border rounded-3xl text-center border-cyan-800">Печать</NuxtLink>
-      <button @click="clearRightTable" class="">Очистить правую таблицу</button>
+      <div class="flex gapper">
+        <NuxtLink to="/print" @click="saveToLocalStorage" class="button px-4 py-2 bg-white text-xl border rounded-3xl text-center border-cyan-800">Печать</NuxtLink>
+        <button class="clear bg-white text-xl border rounded-3xl text-center" @click="clearRightTable">Очистить правую таблицу</button>
+      </div>
   </div>
 
   <div class='table-container'>
     <table>
     <thead>
     <tr>
-      <th>Street</th>
-      <th>Number</th>
-      <th>TP</th>
+      <th>Улица</th>
+      <th>Номер</th>
+      <th>ТП</th>
     </tr>
     </thead>
     <tbody class="">
-    <tr class="!mt-10" v-for="({street, number, tp, id}, index) in filteredItems" :key="index" @dblclick="deleteRow(String(id))">
+    <tr class="!mt-10" v-for="({street, number, tp, id}, index) in filteredItems" :key="index" @dblclick="deleteRow(String(id), 'left')">
       <td>{{ street }}</td>
       <td>{{ number }}</td>
       <td>{{ tp }}</td>
@@ -134,16 +154,16 @@ onMounted(() => {
   <table id="printable">
     <thead>
     <tr>
-      <th>Street</th>
-      <th>Number</th>
-      <th>TP</th>
+      <th>Улица</th>
+      <th>Номер</th>
+      <th>ТП</th>
     </tr>
     </thead>
     <tbody class="">
-    <tr class="" v-for="(item, index) in currentStreets" :key="index">
-      <td >{{ item.street }}</td>
-      <td>{{ item.number }}</td>
-      <td>{{ item.tp }}</td>
+    <tr class="" v-for="({street, number, tp, id}, index) in currentStreets" :key="index" @dblclick="deleteRow(String(id), 'right')">
+      <td >{{ street }}</td>
+      <td>{{ number }}</td>
+      <td>{{ tp }}</td>
     </tr>
     </tbody>
   </table>
@@ -156,7 +176,10 @@ table {
   width: 100%;
   border-collapse: collapse;
 }
-
+tr:hover{
+  cursor: pointer;
+  background-color: rgba(21,94,117,0.1);
+}
 th, td {
   border: 1px solid #ddd;
   padding: 8px;
@@ -164,7 +187,8 @@ th, td {
 }
 
 th {
-  background-color: #f2f2f2;
+  color: white;
+  background-color: rgba(21, 94, 117, 0.9);
 }
 .container-filters {
   align-items: end;
@@ -179,17 +203,33 @@ th {
 .gapper {
   gap: 15px;
 }
+.gapper-2 {
+  gap: 5px;
+}
 .number-container {
 }
 button {
   padding: 8px 30px;
   height: fit-content;
 }
+a:hover{
+  background-color: rgb(21 94 117);
+  color: #fff;
+  transition: background-color;
+  transition-duration: 200ms;
+}
 button:hover{
   background-color: rgb(21 94 117);
   color: #fff;
   transition: background-color;
   transition-duration: 200ms;
+}
+button.clear{
+  border-color: red;
+}
+button.clear:hover{
+  background-color: rgba(255,0,0,1)
+;
 }
 .input-field {
   max-width: 180px;
@@ -206,6 +246,6 @@ input {
 .input-number {
   display: flex;
   gap: 10px;
-  margin-top: 10px;
+  margin-top: 15px;
 }
 </style>

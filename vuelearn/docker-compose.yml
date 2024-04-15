@@ -1,0 +1,19 @@
+version: '3'
+
+services:
+  app:
+    # Имя вашего сервиса
+    container_name: rndenergo
+
+    # Путь к Dockerfile
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    # Перенаправление порта из контейнера на хост
+    ports:
+      - "3000:3000"
+
+    # Перемонтируйте локальный каталог с кодом приложения в контейнер
+    volumes:
+      - .:/usr/src/rndenergo
