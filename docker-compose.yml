@@ -7,7 +7,7 @@ services:
 
     # Путь к Dockerfile
     build:
-      context: .
+      context: vuelearn
       dockerfile: Dockerfile
 
     # Перенаправление порта из контейнера на хост

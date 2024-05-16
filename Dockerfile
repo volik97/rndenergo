@@ -11,7 +11,7 @@ COPY package*.json ./
 RUN yarn
 
 # Скопируйте все файлы приложения
-COPY . .
+COPY vuelearn .
 
 # Соберите приложение
 RUN yarn build
